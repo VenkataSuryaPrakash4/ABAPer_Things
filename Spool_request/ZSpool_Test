@@ -60,7 +60,7 @@ START-OF-SELECTION.
     SORT gt_acdoca BY rbukrs kunnr budat.
   ENDIF.
 
-*&—– Fetch data from the database —–*
+*&ï¿½ï¿½ Fetch data from the database ï¿½ï¿½*
   LOOP AT gt_acdoca INTO DATA(lwa_acdoca).
     gv_bukrs = lwa_acdoca-rbukrs.
     gv_kunnr = lwa_acdoca-kunnr.
@@ -93,7 +93,7 @@ START-OF-SELECTION.
     REFRESH:gt_items.
   ENDLOOP.
 
-*&—– Field Catalog —–*
+*&ï¿½ï¿½ Field Catalog ï¿½ï¿½*
   ADD 1 TO gv_count.
   APPEND VALUE #( col_pos = gv_count fieldname = 'BUKRS'
                   key = 'X' outputlen = 5
@@ -213,21 +213,21 @@ FORM end_of_list.
       it_list_commentary = lt_foot.
 ENDFORM.
 
-*&———————————————————————*
+*&ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½*
 *& Form FORM_MENU
-*&———————————————————————*
+*&ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½*
 * SET Screen
-*———————————————————————-*
+*ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½-*
 FORM ZPF_STAT_CUST USING rt_extab TYPE slis_t_extab.
 
   SET PF-STATUS 'ZPF_STAT_CUST'.
 
 ENDFORM. "FORM_MENU
-*&———————————————————————*
+*&ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½*
 *& Form USER_COMMAND
-*&———————————————————————*
+*&ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½*
 * for to handle user command
-*———————————————————————-*
+*ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½-*
 
 FORM USR_CMD USING r_ucomm LIKE sy-ucomm
 rs_selfield TYPE slis_selfield.
