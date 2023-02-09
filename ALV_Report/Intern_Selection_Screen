@@ -1,0 +1,8 @@
+*&---------------------------------------------------------------------*
+*& Include          ZINTERN_SS
+*&---------------------------------------------------------------------*
+
+***Selection screen for values Ranged sales document number as Input.
+SELECTION-SCREEN BEGIN OF BLOCK text-002  WITH FRAME TITLE TEXT-001.
+SELECT-OPTIONS s_doc FOR vbak-vbeln.
+SELECTION-SCREEN END OF BLOCK text-002.

@@ -1,0 +1,267 @@
+*&---------------------------------------------------------------------*
+*& Include          ZINTERN_CD
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*& Form GET_DATA
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_data.
+
+*********************************************************
+*******Fetching Sales Doc.Number,Sales Category**********
+*********************************************************
+  SELECT vbeln,vbtyp
+    INTO TABLE @DATA(lt_vbak)
+    FROM vbak
+    WHERE vbeln IN @s_doc.
+
+*********************************************************
+*********Fetching Item Number,Material Number************
+*********************************************************
+  IF lt_vbak IS NOT INITIAL.
+    SELECT posnr,matnr,vbeln
+      INTO TABLE @DATA(lt_vbap)
+      FROM vbap
+      FOR ALL ENTRIES IN @lt_vbak
+      WHERE vbeln = @lt_vbak-vbeln.
+  ENDIF.
+
+*********************************************************
+*********Fetching Material Type,Material Number**********
+*********************************************************
+  IF lt_vbap IS NOT INITIAL.
+    SELECT matnr,mtart
+      INTO TABLE @DATA(lt_mara)
+      FROM mara
+      FOR ALL ENTRIES IN @lt_vbap
+      WHERE matnr = @lt_vbap-matnr.
+  ENDIF.
+
+*********************************************************
+*********Fetching Material Number,Material Plant*********
+*********************************************************
+  IF lt_mara IS NOT INITIAL.
+    SELECT matnr,werks
+      INTO TABLE @DATA(lt_marc)
+      FROM marc
+      FOR ALL ENTRIES IN @lt_mara
+      WHERE matnr = @lt_mara-matnr.
+  ENDIF.
+
+*********************************************************
+******Fetching Material Description,Material Number******
+*********************************************************
+  IF lt_marc IS NOT INITIAL.
+    SELECT matnr,maktx
+       INTO TABLE @DATA(lt_makt)
+       FROM makt
+       FOR ALL ENTRIES IN @lt_marc
+       WHERE matnr = @lt_marc-matnr
+         AND spras = 'E'.
+  ENDIF.
+
+********Mapping to Final work area.
+  LOOP AT lt_vbap INTO DATA(lwa_vbap).
+    gwa_final-vbeln = lwa_vbap-vbeln.
+    gwa_final-posnr = lwa_vbap-posnr.
+    gwa_final-matnr = lwa_vbap-matnr.
+    READ TABLE lt_vbak INTO DATA(lwa_vbak) WITH KEY vbeln = lwa_vbap-vbeln.
+    IF sy-subrc EQ 0.
+      gwa_final-vbtyp = lwa_vbak-vbtyp.
+    ENDIF.
+
+***************************************************************
+************************************************
+*Using Nested Loops-Leads to performance Issues*
+************************************************
+*
+*    LOOP AT lt_marc INTO DATA(lwa_marc).
+*      gwa_final-werks = lwa_marc-werks.
+*      READ TABLE lt_mara INTO DATA(lwa_mara) WITH KEY matnr = lwa_marc-matnr.
+*      IF sy-subrc EQ 0.
+*        gwa_final-mtart = lwa_mara-mtart.
+*      ENDIF.
+*
+*      READ TABLE lt_makt INTO DATA(lwa_makt) WITH KEY matnr = lwa_marc-matnr.
+*      IF sy-subrc EQ 0.
+*        gwa_final-maktx = lwa_makt-maktx.
+*      ENDIF.
+*
+**********Appending every final work area to Internal table.
+*      APPEND gwa_final TO gt_final.
+*      CLEAR:lwa_marc.
+*  ENDLOOP.
+
+******Clearing Work areas.
+*    CLEAR : lwa_vbap,gwa_final.
+*  ENDLOOP.
+**************************************************************
+
+***Initiating Parallel Cursor.
+    READ TABLE lt_marc INTO DATA(lwa_marc) WITH KEY matnr = lwa_vbap-matnr.
+    IF sy-subrc EQ 0.
+      DATA(lv_index) = sy-tabix.
+      LOOP AT lt_marc INTO lwa_marc FROM lv_index.
+        gwa_final-werks = lwa_marc-werks.
+        READ TABLE lt_mara INTO DATA(lwa_mara) WITH KEY matnr = lwa_marc-matnr.
+        IF sy-subrc EQ 0.
+          gwa_final-mtart = lwa_mara-mtart.
+        ENDIF.
+
+        READ TABLE lt_makt INTO DATA(lwa_makt) WITH KEY matnr = lwa_marc-matnr.
+        IF sy-subrc EQ 0.
+          gwa_final-maktx = lwa_makt-maktx.
+        ENDIF.
+
+***Appending every final work area to Internal table.
+        APPEND gwa_final TO gt_final.
+        CLEAR:lwa_marc.
+      ENDLOOP.
+***End of Sy-tabix condition.
+    ENDIF.
+***Clearing Work areas.
+    CLEAR : lwa_vbap,gwa_final.
+  ENDLOOP.
+
+  PERFORM display TABLES gt_final.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form DISPLAY
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*      -->P_GT_FINAL  text
+*&---------------------------------------------------------------------*
+FORM display  TABLES   p_gt_final.
+
+*******Local Data Declerations.
+  DATA: lt_fieldcat TYPE TABLE OF slis_fieldcat_alv,
+        lv_count    TYPE i VALUE 0,
+        lt_event    TYPE slis_t_event,
+        lv_listtype TYPE slis_list_type,
+        lwa_layout  TYPE slis_layout_alv.
+
+  CONSTANTS: lv_con TYPE c VALUE '4'.
+
+
+*******Field Catalog.
+  ADD 1 TO lv_count.
+  APPEND VALUE #( col_pos = lv_count fieldname = 'VBELN' seltext_m = 'Sales Document Number' key = 'X') TO lt_fieldcat.
+
+  ADD 1 TO lv_count.
+  APPEND VALUE #( col_pos = lv_count fieldname = 'VBTYP' seltext_m = 'Sales Category' ) TO lt_fieldcat.
+
+  ADD 1 TO lv_count.
+  APPEND VALUE #( col_pos = lv_count fieldname = 'POSNR' seltext_m = 'Item Number' ) TO lt_fieldcat.
+
+  ADD 1 TO lv_count.
+  APPEND VALUE #( col_pos = lv_count fieldname = 'MATNR' seltext_m = 'Material Number' ) TO lt_fieldcat.
+
+  ADD 1 TO lv_count.
+  APPEND VALUE #( col_pos = lv_count fieldname = 'MTART' seltext_m = 'Material Type' ) TO lt_fieldcat.
+
+  ADD 1 TO lv_count.
+  APPEND VALUE #( col_pos = lv_count fieldname = 'WERKS' seltext_m = 'Material Plant' ) TO lt_fieldcat.
+
+  ADD 1 TO lv_count.
+  APPEND VALUE #( col_pos = lv_count fieldname = 'MAKTX' seltext_m = 'Martial Description' ) TO lt_fieldcat.
+
+*******Layout.
+  lwa_layout-zebra = 'X'.
+  lwa_layout-colwidth_optimize = 'X'.
+
+*******Events.
+  lv_listtype = lv_con.
+  CALL FUNCTION 'REUSE_ALV_EVENTS_GET'
+    EXPORTING
+      i_list_type     = lv_listtype
+    IMPORTING
+      et_events       = lt_event
+    EXCEPTIONS
+      list_type_wrong = 1
+      OTHERS          = 2.
+
+  IF lt_event IS NOT INITIAL.
+    DATA(lwa_event) = lt_event[ name = 'TOP_OF_PAGE']. "new syntax for Read statement. 3 is for 'Top of Page'.
+*    DATA(lwa_event) = lt_event[ 3 ]. "new syntax for Read statement. 3 is for 'Top of Page'.
+    lwa_event-form = 'TOP_OF_PAGE'.
+    MODIFY lt_event FROM lwa_event INDEX 3. "sy-tabix.
+
+    CLEAR: lwa_event.
+
+    lwa_event = lt_event[ 12 ]. "new syntax for Read statement. 12 is for 'End of List'.
+    lwa_event-form = 'END_OF_PAGE'.
+    MODIFY lt_event FROM lwa_event INDEX sy-tabix.
+    CLEAR: lwa_event.
+  ENDIF.
+
+*******ALV Grid.
+
+  CALL FUNCTION 'REUSE_ALV_GRID_DISPLAY'
+    EXPORTING
+      i_callback_program = sy-repid
+      i_grid_title       = 'ALV Report'
+      is_layout          = lwa_layout
+      it_fieldcat        = lt_fieldcat
+      it_events          = lt_event
+    TABLES
+      t_outtab           = p_gt_final
+    EXCEPTIONS
+      program_error      = 1
+      OTHERS             = 2.
+ENDFORM.
+
+***********************************************
+**************Top_Of_Page Event****************
+***********************************************
+FORM top_of_page.
+
+***Data Declerations.
+  DATA: lt_head TYPE slis_t_listheader,
+        lv_time TYPE char8,
+        lv_date TYPE char10.
+
+***Converting Internal to External date formate.
+  CALL FUNCTION 'CONVERT_DATE_TO_EXTERNAL'
+    EXPORTING
+      date_internal            = sy-datum
+    IMPORTING
+      date_external            = lv_date
+    EXCEPTIONS
+      date_internal_is_invalid = 1
+      OTHERS                   = 2.
+
+***Converting Time formate.
+  lv_time = |{ sy-uzeit+0(2) }| & |:| & |{ sy-uzeit+2(2) }| & |:| & |{ sy-uzeit+4(2) }|.
+
+  APPEND VALUE #( typ = 'H' info = 'Sales Document Report' ) TO lt_head.
+  APPEND VALUE #( typ = 'S' key = 'Date  :' info = lv_date ) TO lt_head.
+  APPEND VALUE #( typ = 'S' key = 'User  :' info = sy-uname ) TO lt_head.
+  APPEND VALUE #( typ = 'S' key = 'Time  :' info = lv_time ) TO lt_head.
+
+  CALL FUNCTION 'REUSE_ALV_COMMENTARY_WRITE'
+    EXPORTING
+      it_list_commentary = lt_head.
+*      i_logo             = 'SAPABAP_IMG'  "Tcode- OAER
+ENDFORM.
+
+***********************************************
+**************End_Of_Page Event****************
+***********************************************
+FORM end_of_page.
+  DATA: lt_foot TYPE slis_t_listheader.
+
+  APPEND VALUE #( typ = 'A' info = TEXT-003 ) TO lt_foot.
+
+  CALL FUNCTION 'REUSE_ALV_COMMENTARY_WRITE'
+    EXPORTING
+      it_list_commentary = lt_foot.
+
+  IF sy-subrc EQ 0.
+  ENDIF.
+
+ENDFORM.

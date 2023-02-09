@@ -1,0 +1,17 @@
+*&---------------------------------------------------------------------*
+*& Report ZINTERN_ALVPROJECT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT zintern_alvproject.
+TABLES: vbak.
+
+INCLUDE zintern_dd. "Global Data Decleration.
+INCLUDE zintern_ss. "Selection Screen.
+INCLUDE zintern_cd. "Code Development.
+
+START-OF-SELECTION. "Business Logic.
+  PERFORM get_data. "Fetching data from Database tables.
+
+  IF sy-subrc = 0.
+  ENDIF.

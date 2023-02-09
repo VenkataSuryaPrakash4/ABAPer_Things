@@ -1,0 +1,17 @@
+*&---------------------------------------------------------------------*
+*& Include          ZINTERN_DD
+*&---------------------------------------------------------------------*
+
+***Final Internal Table and Work area Structure.
+TYPES: BEGIN OF ty_final,
+         vbeln TYPE vbeln_va,
+         vbtyp TYPE vbtypl,
+         posnr TYPE posnr_va,
+         matnr TYPE matnr,
+         mtart TYPE mtart,
+         werks TYPE werks_d,
+         maktx TYPE maktx,
+       END OF ty_final.
+
+DATA : gt_final  TYPE TABLE OF ty_final,
+       gwa_final TYPE ty_final.
