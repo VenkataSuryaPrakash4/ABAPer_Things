@@ -1,0 +1,73 @@
+*&---------------------------------------------------------------------*
+*& Report ZINTERACTIVE_REPORT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT zinteractive_report.
+
+DATA:lv_fld    TYPE kunnr,
+     lv_value  TYPE kunnr,
+     lv_field2 TYPE vbeln,
+     lv_value2 TYPE vbeln.
+SELECT kunnr,name1
+  INTO TABLE @DATA(lt_kna1)
+  FROM kna1.
+*  UP TO 5 ROWS.
+
+IF lt_kna1[] IS NOT INITIAL.
+  SELECT vbeln, vbtyp, kunnr
+    INTO TABLE @DATA(lt_vbak)
+    FROM vbak
+    FOR ALL ENTRIES IN @lt_kna1
+   WHERE kunnr = @lt_kna1-kunnr.
+ENDIF.
+
+IF lt_vbak[] IS NOT INITIAL.
+  SELECT vbeln,posnr
+    INTO TABLE @DATA(lt_vbap)
+    FROM vbap
+    FOR ALL ENTRIES IN @lt_vbak
+    WHERE vbeln = @lt_vbak-vbeln.
+ENDIF.
+
+LOOP AT lt_kna1 INTO DATA(wa_kna1).
+  WRITE :/ wa_kna1-kunnr, wa_kna1-name1.
+  CLEAR: wa_kna1.
+ENDLOOP.
+
+AT LINE-SELECTION.
+
+  CASE sy-lsind.
+
+    WHEN 1.
+      GET CURSOR FIELD lv_fld VALUE lv_value.
+
+      CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+        EXPORTING
+          input  = lv_value
+        IMPORTING
+          output = lv_value.
+
+
+      LOOP AT lt_vbak INTO DATA(wa_vbak) WHERE kunnr = lv_value.
+        WRITE: / wa_vbak-vbeln, wa_vbak-vbtyp.
+        CLEAR: wa_vbak.
+      ENDLOOP.
+
+    WHEN 2.
+      GET CURSOR FIELD lv_field2 VALUE lv_value2.
+
+      CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+        EXPORTING
+          input  = lv_value2
+        IMPORTING
+          output = lv_value2.
+
+      LOOP AT lt_vbap INTO DATA(wa_vbap) WHERE vbeln = lv_value2.
+        WRITE: / wa_vbap-vbeln, wa_vbap-posnr.
+        CLEAR: wa_vbap.
+      ENDLOOP.
+  ENDCASE.
+  IF sy-subrc = 0.
+
+  ENDIF.
